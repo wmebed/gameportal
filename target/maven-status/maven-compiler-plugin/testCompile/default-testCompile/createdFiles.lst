@@ -1,9 +1,0 @@
-com/gamenewbie/webapp/filter/LocaleFilterTest.class
-com/gamenewbie/webapp/controller/SignupControllerTest.class
-com/gamenewbie/webapp/controller/UserControllerTest.class
-com/gamenewbie/webapp/filter/MockFilterChain.class
-com/gamenewbie/webapp/controller/BaseControllerTestCase.class
-com/gamenewbie/webapp/controller/UpdatePasswordControllerTest.class
-com/gamenewbie/webapp/controller/PasswordHintControllerTest.class
-com/gamenewbie/webapp/controller/UserFormControllerTest.class
-com/gamenewbie/webapp/listener/StartupListenerTest.class

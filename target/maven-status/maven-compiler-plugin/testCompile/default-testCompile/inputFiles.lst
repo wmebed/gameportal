@@ -1,9 +1,0 @@
-/Users/wmebed/cards-ws/gameportal/src/test/java/com/gamenewbie/webapp/filter/LocaleFilterTest.java
-/Users/wmebed/cards-ws/gameportal/src/test/java/com/gamenewbie/webapp/listener/StartupListenerTest.java
-/Users/wmebed/cards-ws/gameportal/src/test/java/com/gamenewbie/webapp/filter/MockFilterChain.java
-/Users/wmebed/cards-ws/gameportal/src/test/java/com/gamenewbie/webapp/controller/BaseControllerTestCase.java
-/Users/wmebed/cards-ws/gameportal/src/test/java/com/gamenewbie/webapp/controller/PasswordHintControllerTest.java
-/Users/wmebed/cards-ws/gameportal/src/test/java/com/gamenewbie/webapp/controller/UserFormControllerTest.java
-/Users/wmebed/cards-ws/gameportal/src/test/java/com/gamenewbie/webapp/controller/SignupControllerTest.java
-/Users/wmebed/cards-ws/gameportal/src/test/java/com/gamenewbie/webapp/controller/UpdatePasswordControllerTest.java
-/Users/wmebed/cards-ws/gameportal/src/test/java/com/gamenewbie/webapp/controller/UserControllerTest.java

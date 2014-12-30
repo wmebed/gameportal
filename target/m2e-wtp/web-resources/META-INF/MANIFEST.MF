@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Implementation-Title: AppFuse Spring MVC Application
+Implementation-Version: 1.0-SNAPSHOT
+Built-By: wmebed
+Implementation-Vendor-Id: com.gamenewbie
+Build-Jdk: 1.8.0_20
+Created-By: Maven Integration for Eclipse
+

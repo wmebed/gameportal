@@ -71,4 +71,17 @@
 
 	</form>
 </c:if>
+<div style="clear: both; padding-top: 10px">
+<c:if test="${not empty score}">
+	<c:if test="${score == 'you'}">
+		<span>You were the winner!</span>
+		</c:if>
+		<c:if test="${score == 'computer'}">
+		<span>The computer was the winner!</span>
+		</c:if>
+		<c:if test="${score == 'tie'}">
+		<span>It was a tie!</span>
+		</c:if>
+</c:if>
+</div>
 </body>

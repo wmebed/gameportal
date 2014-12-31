@@ -20,6 +20,7 @@ import com.mebed.cards.AbstractCard;
 import com.mebed.cards.Card;
 import com.mebed.cards.Deck;
 import com.mebed.cards.Hand;
+import com.mebed.cards.PokerGame;
 
 
 /**
@@ -93,6 +94,18 @@ public class PokerController {
         } else {
         	showCards = true;
         }
+    	
+    	if (showCards) {
+    		Double scoreComputer = PokerGame.scoreHand(computer);
+    		Double scoreHand = PokerGame.scoreHand(hand);
+    		if (scoreHand > scoreComputer) {
+    			model.addAttribute("score", "you");
+    		} else if (scoreComputer > scoreHand) {
+    			model.addAttribute("score", "computer");
+    		} else {
+    			model.addAttribute("score", "tie");
+    		}
+    	}
     	
     	model.addAttribute("river", river.getCards());
     	model.addAttribute("hand", hand.getCards());

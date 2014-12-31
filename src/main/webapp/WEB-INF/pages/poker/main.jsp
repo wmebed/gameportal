@@ -6,6 +6,7 @@
 </head>
 <body class="home">
 
+
 <h3 style="padding-top:0px;">Computer</h2>
 <c:choose>
 <c:when test="${showCards}">
@@ -21,6 +22,16 @@
 </div>
 </c:otherwise>
 </c:choose>
+
+<div style="float: left; padding-left: 20px;">
+  <table class="table-striped" cellpadding="5">
+        <tr>
+            <th>Computer Account:</th>
+            <td><c:out value="${computerAccount.balance}"/></td>
+        </tr>
+    </table>
+</div>
+
 
 <div style="clear: both;">
 <h3 style="padding-top:10px;">River</h2>
@@ -47,7 +58,16 @@
 </c:otherwise>
 </c:choose>
 </div>
-
+<c:if test="${state != 0}">
+<div style="float: left; padding-left: 20px;">
+  <table class="table-striped" cellpadding="5">
+        <tr>
+            <th>Pot:</th>
+            <td><c:out value="${pot.balance}"/></td>
+        </tr>
+    </table>
+</div>
+</c:if>
 
 <div>
 <div style="clear: both;">
@@ -56,21 +76,39 @@
 <div style="float: left; padding: 2px 2px 2px 2px;"><img src="/gameportal/images/cards_png/${hand[1].imageName}"></img></div>
 </div>
 
+<div style="float: left; padding-left: 20px;">
+  <table class="table-striped" cellpadding="5">
+        <tr>
+            <th>Player Account:</th>
+            <td><c:out value="${playerAccount.balance}"/></td>
+        </tr>
+    </table>
+</div>
+
 <div style="clear: both; padding-top: 10px">
 <div style="float: left; padding: 2px 2px 2px 2px;">
-<a style="padding: 2px 2px 2px 2px;" class="btn btn-default" href="<c:url value='/poker/main'/>">
+<a style="padding: 2px 2px 2px 2px;" class="btn btn-default" href="<c:url value='/poker'/>">
     <i class="icon-ok"></i> Deal</a>
 </div>
+<c:if test="${empty winner}">
 <div style="float: left; padding: 2px 2px 2px 2px;">
 <a style="padding: 2px 2px 2px 2px;" class="btn btn-default" href="#" onclick="document.getElementById('form1').submit()">
     <i class="icon-ok"></i> Bet</a>
 </div>  
+</c:if>
 </div>
+<div style="clear: both; padding-top: 10px">
 <c:if test="${not empty hand}">
 	<form id="form1" method="POST" action="/gameportal/poker/bet" >
-
+		<table class="table-striped" cellpadding="5">
+        <tr>
+            <th>Bet:</th>
+            <td><input name="bet"></td>
+        </tr>
+    </table>
 	</form>
 </c:if>
+</div>
 <div style="clear: both; padding-top: 10px">
 <c:if test="${not empty winner}">
 	<c:if test="${winner == 'you'}">

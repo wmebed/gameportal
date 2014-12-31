@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
+import com.mebed.account.Account;
 import com.mebed.cards.AbstractCard;
 import com.mebed.cards.Card;
 import com.mebed.cards.Deck;
@@ -42,8 +43,8 @@ public class PokerController {
         this.userManager = userManager;
     }
 
-    @RequestMapping(value = "main", method = RequestMethod.GET)
-    public ModelAndView startGame(@RequestParam(required = false, value = "response") String response, HttpServletRequest request) throws Exception {
+    @RequestMapping(method = RequestMethod.GET)
+    public ModelAndView startGame(@RequestParam(required = false, value = "reset") boolean reset, HttpServletRequest request) throws Exception {
         Model model = new ExtendedModelMap();
 
     	Deck deck = new Deck();
@@ -57,12 +58,24 @@ public class PokerController {
     	for (int i = 0; i < 2; i++) {
     		computer.addCard(deck.dealCard());
     	}
+    
+    	Account playerAccount = (Account) request.getSession().getAttribute("playerAccount");;
+    	Account computerAccount = (Account) request.getSession().getAttribute("computerAccount");;
+
+    	if (reset || playerAccount == null) {
+    		playerAccount = new Account(100);
+    		request.getSession().setAttribute("playerAccount", playerAccount);
+    		computerAccount = new Account(100);
+    		request.getSession().setAttribute("computerAccount", computerAccount);
+    	}
     	
     	request.getSession().setAttribute("deck", deck);
     	request.getSession().setAttribute("computer", computer);
     	request.getSession().setAttribute("hand", hand);
     	request.getSession().setAttribute("river", null);
     	
+    	model.addAttribute("computerAccount", computerAccount);
+    	model.addAttribute("playerAccount", playerAccount);
     	model.addAttribute("hand", hand.getCards());
     	model.addAttribute("computer", computer.getCards());
         model.addAttribute("state", 0);
@@ -71,18 +84,32 @@ public class PokerController {
     }
     
     @RequestMapping(value = "bet", method = RequestMethod.POST)
-    public ModelAndView playGame(
+    public ModelAndView playGame(@RequestParam(required = false, value = "bet") Double bet,
     		HttpServletRequest request) throws Exception {
-    	
-    	boolean showCards = false;
-    	HttpSession session = request.getSession();
-    	Deck deck = (Deck) session.getAttribute("deck");
-    	
     	Model model = new ExtendedModelMap();
+    	boolean showCards = false;
+    	if (bet == null) {
+    		bet = 0.0;
+    	}
+    	HttpSession session = request.getSession();
+    	Deck deck = (Deck) session.getAttribute("deck");  	
     	Hand hand = (Hand) session.getAttribute("hand");
     	Hand computer = (Hand) session.getAttribute("computer");
     	Hand river = (Hand) session.getAttribute("river");
+    	Account pot = (Account) session.getAttribute("pot");
+    	Account computerAccount = (Account) session.getAttribute("computerAccount");
+    	Account playerAccount = (Account) session.getAttribute("playerAccount");
+    	if (pot == null) {
+    		pot = new Account(0);
+    		session.setAttribute("pot", pot);
+    	}
     	
+    	pot.deposit(bet*2);
+    	playerAccount.withdraw(bet);
+    	computerAccount.withdraw(bet);
+    	
+    	
+    	// Play hand
     	Hand finalComputer = new Hand();
     	Hand finalHand = new Hand();
     	if (river == null) {
@@ -105,28 +132,42 @@ public class PokerController {
         	showCards = true;
         }
     	
-    	Double scoreComputer = null;
-    	Double scoreHand = null;
+
     	if (showCards) {
-    		scoreComputer = PokerGame.scoreHand(finalComputer);
-    		scoreHand = PokerGame.scoreHand(finalHand);
-    		if (scoreHand > scoreComputer) {
-    			model.addAttribute("winner", "you");
-    		} else if (scoreComputer > scoreHand) {
-    			model.addAttribute("winner", "computer");
-    		} else {
-    			model.addAttribute("winner", "tie");
-    		}
+    		scoreHands(finalComputer, finalHand, model, pot, computerAccount, playerAccount);
     	}
     	
     	model.addAttribute("river", river.getCards());
     	model.addAttribute("hand", hand.getCards());
     	model.addAttribute("computer", computer.getCards());
     	model.addAttribute("showCards", showCards);
+    	model.addAttribute("pot", pot);
         model.addAttribute("state", 1);
-        model.addAttribute("scoreHand", scoreHand);
-        model.addAttribute("scoreComputer", scoreComputer);
+
 
         return new ModelAndView("poker/main", model.asMap());
     }
+    
+    private void scoreHands(Hand finalComputer, Hand finalHand, Model model, Account pot, Account computerAccount, Account playerAccount) {
+    	Double scoreComputer = null;
+    	Double scoreHand = null;
+		scoreComputer = PokerGame.scoreHand(finalComputer);
+		scoreHand = PokerGame.scoreHand(finalHand);
+		if (scoreHand > scoreComputer) {
+			model.addAttribute("winner", "you");
+			playerAccount.deposit(pot.getBalance());
+		} else if (scoreComputer > scoreHand) {
+			model.addAttribute("winner", "computer");
+			computerAccount.deposit(pot.getBalance());
+		} else {
+			model.addAttribute("winner", "tie");
+			playerAccount.deposit(pot.getBalance()/2);
+		}
+		pot.setBalance(0);
+
+        model.addAttribute("state", 1);
+        model.addAttribute("scoreHand", scoreHand);
+        model.addAttribute("scoreComputer", scoreComputer);
+    }
+    
 }

@@ -83,6 +83,8 @@ public class PokerController {
     	Hand computer = (Hand) session.getAttribute("computer");
     	Hand river = (Hand) session.getAttribute("river");
     	
+    	Hand finalComputer = new Hand();
+    	Hand finalHand = new Hand();
     	if (river == null) {
     		river = new Hand();
         	for (int i = 0; i < 3; i++) {
@@ -92,18 +94,28 @@ public class PokerController {
     	} else if (river.getCards().size() < 5) {
         		river.addCard(deck.dealCard());
         } else {
+        	for (int i = 0; i < 2; i++) {
+        		finalComputer.addCard(computer.getCards().get(i));
+        		finalHand.addCard(hand.getCards().get(i));
+        	}
+        	for (int i = 0; i < 5; i++) {
+        		finalComputer.addCard(river.getCards().get(i));
+        		finalHand.addCard(river.getCards().get(i));
+        	}
         	showCards = true;
         }
     	
+    	Double scoreComputer = null;
+    	Double scoreHand = null;
     	if (showCards) {
-    		Double scoreComputer = PokerGame.scoreHand(computer);
-    		Double scoreHand = PokerGame.scoreHand(hand);
+    		scoreComputer = PokerGame.scoreHand(finalComputer);
+    		scoreHand = PokerGame.scoreHand(finalHand);
     		if (scoreHand > scoreComputer) {
-    			model.addAttribute("score", "you");
+    			model.addAttribute("winner", "you");
     		} else if (scoreComputer > scoreHand) {
-    			model.addAttribute("score", "computer");
+    			model.addAttribute("winner", "computer");
     		} else {
-    			model.addAttribute("score", "tie");
+    			model.addAttribute("winner", "tie");
     		}
     	}
     	
@@ -112,6 +124,8 @@ public class PokerController {
     	model.addAttribute("computer", computer.getCards());
     	model.addAttribute("showCards", showCards);
         model.addAttribute("state", 1);
+        model.addAttribute("scoreHand", scoreHand);
+        model.addAttribute("scoreComputer", scoreComputer);
 
         return new ModelAndView("poker/main", model.asMap());
     }

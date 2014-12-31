@@ -72,16 +72,20 @@
 	</form>
 </c:if>
 <div style="clear: both; padding-top: 10px">
-<c:if test="${not empty score}">
-	<c:if test="${score == 'you'}">
+<c:if test="${not empty winner}">
+	<c:if test="${winner == 'you'}">
 		<span>You were the winner!</span>
 		</c:if>
-		<c:if test="${score == 'computer'}">
+		<c:if test="${winner == 'computer'}">
 		<span>The computer was the winner!</span>
 		</c:if>
-		<c:if test="${score == 'tie'}">
+		<c:if test="${winner == 'tie'}">
 		<span>It was a tie!</span>
 		</c:if>
+</c:if>
+<c:if test="${not empty scoreHand}">
+	<div style="clear: both; padding-top: 10px">Your score ${scoreHand}</div>
+	<div style="clear: both; padding-top: 10px">Computer's score ${scoreComputer}</div>
 </c:if>
 </div>
 </body>

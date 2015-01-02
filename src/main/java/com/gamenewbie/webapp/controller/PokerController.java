@@ -36,6 +36,10 @@ import com.mebed.cards.PokerGame;
 @Controller
 @RequestMapping("/poker")
 public class PokerController {
+	
+	enum HandStatus {
+		start, raise, call, check, fold, finish
+	}
     private UserManager userManager = null;
 
     @Autowired
@@ -60,37 +64,74 @@ public class PokerController {
     	}
     
     	Account playerAccount = (Account) request.getSession().getAttribute("playerAccount");;
-    	Account computerAccount = (Account) request.getSession().getAttribute("computerAccount");;
+    	Account computerAccount = (Account) request.getSession().getAttribute("computerAccount");
+    	Integer dealerButton = (Integer) request.getSession().getAttribute("dealerButton");
+    	HandStatus handStatus = HandStatus.start;
 
     	if (reset || playerAccount == null) {
     		playerAccount = new Account(100);
     		request.getSession().setAttribute("playerAccount", playerAccount);
     		computerAccount = new Account(100);
     		request.getSession().setAttribute("computerAccount", computerAccount);
+    		dealerButton = 0;
     	}
     	
+    	String message = null;
+    	
+    	
+    	// Two player game
+//    	if (dealerButton == 0) {
+//    		dealerButton = 1;
+//    	} else {
+//    		dealerButton = 0;
+//    	}
+    	
+    	if (dealerButton == 0) {
+    		message = "Ante is 1, your bet";
+    	} else {
+    		message = "Computer bets, what do you do?";
+    	}
+    	Account pot = new Account(0);
+    	computerAccount.withdraw(1);
+    	playerAccount.withdraw(1);
+    	pot.deposit(2);
+    	
+    	request.getSession().setAttribute("pot", pot);
     	request.getSession().setAttribute("deck", deck);
     	request.getSession().setAttribute("computer", computer);
     	request.getSession().setAttribute("hand", hand);
     	request.getSession().setAttribute("river", null);
+    	request.getSession().setAttribute("dealerButton", dealerButton);
     	
+    	
+    	model.addAttribute("message", message);
     	model.addAttribute("computerAccount", computerAccount);
     	model.addAttribute("playerAccount", playerAccount);
+    	model.addAttribute("pot", pot);
     	model.addAttribute("hand", hand.getCards());
     	model.addAttribute("computer", computer.getCards());
-        model.addAttribute("state", 0);
+        model.addAttribute("handStatus", handStatus.toString());
 
         return new ModelAndView("poker/main", model.asMap());
     }
     
     @RequestMapping(value = "bet", method = RequestMethod.POST)
-    public ModelAndView playGame(@RequestParam(required = false, value = "bet") Double bet,
+    public ModelAndView playGame(@RequestParam(required = false, value = "bet") Double bet, @RequestParam(required = false, value = "action") String action,
     		HttpServletRequest request) throws Exception {
+
     	Model model = new ExtendedModelMap();
+    	String message = null;
     	boolean showCards = false;
+
     	if (bet == null) {
     		bet = 0.0;
     	}
+
+    	Integer dealerButton = (Integer) request.getSession().getAttribute("dealerButton");
+    	if (dealerButton == 0) {
+    		message = "You last bet was " + bet + ", the computer called";
+    	}
+    	
     	HttpSession session = request.getSession();
     	Deck deck = (Deck) session.getAttribute("deck");  	
     	Hand hand = (Hand) session.getAttribute("hand");
@@ -99,68 +140,106 @@ public class PokerController {
     	Account pot = (Account) session.getAttribute("pot");
     	Account computerAccount = (Account) session.getAttribute("computerAccount");
     	Account playerAccount = (Account) session.getAttribute("playerAccount");
-    	if (pot == null) {
-    		pot = new Account(0);
-    		session.setAttribute("pot", pot);
+    	HandStatus handStatus = null;
+    	
+    	if (action.equals("fold")) {
+    		fold(pot, computerAccount, message);
+    		message = "You folded";
+    		handStatus = HandStatus.finish;
+    	} else {
+    		if (action.equals(bet)) {
+    			handStatus = HandStatus.raise;
+    		} else if (action.equals("call")) {
+    			handStatus = HandStatus.call;
+    		} else if (action.equals("bet")) {
+    			// Automatic computer call...
+    			handStatus = HandStatus.call;
+    		} else if (action.equals("check")) {
+    			// Automatic computer call...
+    			handStatus = HandStatus.check;
+    		}
+    		pot = processAccountsForBet(handStatus, bet, session, pot, computerAccount,
+				playerAccount);
     	}
-    	
-    	pot.deposit(bet*2);
-    	playerAccount.withdraw(bet);
-    	computerAccount.withdraw(bet);
-    	
     	
     	// Play hand
     	Hand finalComputer = new Hand();
     	Hand finalHand = new Hand();
-    	if (river == null) {
-    		river = new Hand();
-        	for (int i = 0; i < 3; i++) {
-        		river.addCard(deck.dealCard());
-        	} 
-        	session.setAttribute("river", river);
-    	} else if (river.getCards().size() < 5) {
-        		river.addCard(deck.dealCard());
-        } else {
-        	for (int i = 0; i < 2; i++) {
-        		finalComputer.addCard(computer.getCards().get(i));
-        		finalHand.addCard(hand.getCards().get(i));
-        	}
-        	for (int i = 0; i < 5; i++) {
-        		finalComputer.addCard(river.getCards().get(i));
-        		finalHand.addCard(river.getCards().get(i));
-        	}
-        	showCards = true;
-        }
+    	if (handStatus.equals(HandStatus.check) || handStatus.equals(HandStatus.call)) {
+	    	if (river == null) {
+	    		river = new Hand();
+	        	for (int i = 0; i < 3; i++) {
+	        		river.addCard(deck.dealCard());
+	        	} 
+	        	session.setAttribute("river", river);
+	    	} else if (river.getCards().size() < 5) {
+	        		river.addCard(deck.dealCard());
+	        } else {
+	        	for (int i = 0; i < 2; i++) {
+	        		finalComputer.addCard(computer.getCards().get(i));
+	        		finalHand.addCard(hand.getCards().get(i));
+	        	}
+	        	for (int i = 0; i < 5; i++) {
+	        		finalComputer.addCard(river.getCards().get(i));
+	        		finalHand.addCard(river.getCards().get(i));
+	        	}
+	        	showCards = true;
+	        	handStatus = HandStatus.finish;
+	        }
+    	}
     	
 
     	if (showCards) {
-    		scoreHands(finalComputer, finalHand, model, pot, computerAccount, playerAccount);
-    	}
+    		message = scoreHands(finalComputer, finalHand, model, pot, computerAccount, playerAccount);
+    	} 
     	
-    	model.addAttribute("river", river.getCards());
+    	model.addAttribute("message", message);
+    	if (river != null) {
+    		model.addAttribute("river", river.getCards());
+    	}
     	model.addAttribute("hand", hand.getCards());
     	model.addAttribute("computer", computer.getCards());
     	model.addAttribute("showCards", showCards);
     	model.addAttribute("pot", pot);
-        model.addAttribute("state", 1);
+        model.addAttribute("handStatus", handStatus.toString());
 
 
         return new ModelAndView("poker/main", model.asMap());
     }
+
+	private Account processAccountsForBet(HandStatus handStatus, Double bet, HttpSession session,
+			Account pot, Account computerAccount, Account playerAccount) {
+		
+		if (handStatus.equals(HandStatus.call) || handStatus.equals(HandStatus.check) || handStatus.equals(HandStatus.raise)) {
+			pot.deposit(bet*2);
+	    	playerAccount.withdraw(bet);
+	    	computerAccount.withdraw(bet);
+		}
+    	
+    	
+		return pot;
+	}
+	
+	private void fold(Account pot, Account computerAccount, String message) {
+    	computerAccount.deposit(pot.getBalance());
+    	pot.setBalance(0);
+    	message = "You folded";
+	}
     
-    private void scoreHands(Hand finalComputer, Hand finalHand, Model model, Account pot, Account computerAccount, Account playerAccount) {
+    private String scoreHands(Hand finalComputer, Hand finalHand, Model model, Account pot, Account computerAccount, Account playerAccount) {
     	Double scoreComputer = null;
     	Double scoreHand = null;
+    	String message = null;
 		scoreComputer = PokerGame.scoreHand(finalComputer);
 		scoreHand = PokerGame.scoreHand(finalHand);
 		if (scoreHand > scoreComputer) {
-			model.addAttribute("winner", "you");
+			message = "You were the winner";
 			playerAccount.deposit(pot.getBalance());
 		} else if (scoreComputer > scoreHand) {
-			model.addAttribute("winner", "computer");
+			message = "The computer was the winner";
 			computerAccount.deposit(pot.getBalance());
 		} else {
-			model.addAttribute("winner", "tie");
+			message = "It was a tie";
 			playerAccount.deposit(pot.getBalance()/2);
 		}
 		pot.setBalance(0);
@@ -168,6 +247,7 @@ public class PokerController {
         model.addAttribute("state", 1);
         model.addAttribute("scoreHand", scoreHand);
         model.addAttribute("scoreComputer", scoreComputer);
+        return message;
     }
     
 }

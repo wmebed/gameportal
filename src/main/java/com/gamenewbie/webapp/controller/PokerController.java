@@ -136,7 +136,7 @@ public class PokerController {
     	HttpSession session = request.getSession();
     	Deck deck = (Deck) session.getAttribute("deck");  	
     	Hand hand = (Hand) session.getAttribute("hand");
-    	Hand computer = (Hand) session.getAttribute("computer");
+    	Hand computerHand = (Hand) session.getAttribute("computer");
     	Hand river = (Hand) session.getAttribute("river");
     	Account pot = (Account) session.getAttribute("pot");
     	Account computerAccount = (Account) session.getAttribute("computerAccount");
@@ -159,9 +159,13 @@ public class PokerController {
     			// Automatic computer call...
     			handStatus = HandStatus.check;
     		}
-    		Strategy strategy = getBettingStrategy(pot, computerAccount, hand, river);
-    		if (strategy.getHandStatus() != HandStatus.fold) {
+    		Strategy strategy = getBettingStrategy(pot, computerAccount, computerHand, river);
+    		if (strategy.getHandStatus() == HandStatus.call) {
     			pot = processAccountsForBet(handStatus, bet, session, pot, computerAccount, playerAccount);
+    		} else if (strategy.getHandStatus() == HandStatus.raise){
+    			message = "Computer raised " + strategy.getBet() + ". Your bet";
+    			computerAccount.withdraw(strategy.getBet());
+    			pot.deposit(strategy.getBet());
     		} else {
     			message = "Computer folded";
     			handStatus = HandStatus.finish;
@@ -185,7 +189,7 @@ public class PokerController {
 	        		river.addCard(deck.dealCard());
 	        } else {
 	        	for (int i = 0; i < 2; i++) {
-	        		finalComputer.addCard(computer.getCards().get(i));
+	        		finalComputer.addCard(computerHand.getCards().get(i));
 	        		finalHand.addCard(hand.getCards().get(i));
 	        	}
 	        	for (int i = 0; i < 5; i++) {
@@ -207,7 +211,7 @@ public class PokerController {
     		model.addAttribute("river", river.getCards());
     	}
     	model.addAttribute("hand", hand.getCards());
-    	model.addAttribute("computer", computer.getCards());
+    	model.addAttribute("computer", computerHand.getCards());
     	model.addAttribute("showCards", showCards);
     	model.addAttribute("pot", pot);
         model.addAttribute("handStatus", handStatus.toString());

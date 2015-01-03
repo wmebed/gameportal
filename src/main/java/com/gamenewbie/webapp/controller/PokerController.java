@@ -175,7 +175,6 @@ public class PokerController {
     	}
     	
     	// Play hand
-    	
     	Hand finalComputer = new Hand();
     	Hand finalHand = new Hand();
     	if (handStatus.equals(HandStatus.check) || handStatus.equals(HandStatus.call)) {

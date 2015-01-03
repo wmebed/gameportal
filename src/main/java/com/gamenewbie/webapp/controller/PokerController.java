@@ -16,7 +16,10 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
-import com.mebed.account.Account;
+import com.mebed.betting.Account;
+import com.mebed.betting.BettingStrategy;
+import com.mebed.betting.HandStatus;
+import com.mebed.betting.Strategy;
 import com.mebed.cards.AbstractCard;
 import com.mebed.cards.Card;
 import com.mebed.cards.Deck;
@@ -37,9 +40,7 @@ import com.mebed.cards.PokerGame;
 @RequestMapping("/poker")
 public class PokerController {
 	
-	enum HandStatus {
-		start, raise, call, check, fold, finish
-	}
+
     private UserManager userManager = null;
 
     @Autowired
@@ -158,11 +159,19 @@ public class PokerController {
     			// Automatic computer call...
     			handStatus = HandStatus.check;
     		}
-    		pot = processAccountsForBet(handStatus, bet, session, pot, computerAccount,
-				playerAccount);
+    		Strategy strategy = getBettingStrategy(pot, computerAccount, hand, river);
+    		if (strategy.getHandStatus() != HandStatus.fold) {
+    			pot = processAccountsForBet(handStatus, bet, session, pot, computerAccount, playerAccount);
+    		} else {
+    			message = "Computer folded";
+    			handStatus = HandStatus.finish;
+    			playerAccount.deposit(pot.getBalance());
+    			pot.setBalance(0.0);
+    		}
     	}
     	
     	// Play hand
+    	
     	Hand finalComputer = new Hand();
     	Hand finalHand = new Hand();
     	if (handStatus.equals(HandStatus.check) || handStatus.equals(HandStatus.call)) {
@@ -210,7 +219,7 @@ public class PokerController {
 	private Account processAccountsForBet(HandStatus handStatus, Double bet, HttpSession session,
 			Account pot, Account computerAccount, Account playerAccount) {
 		
-		if (handStatus.equals(HandStatus.call) || handStatus.equals(HandStatus.check) || handStatus.equals(HandStatus.raise)) {
+		if (handStatus.equals(HandStatus.call) || handStatus.equals(HandStatus.raise)) {
 			pot.deposit(bet*2);
 	    	playerAccount.withdraw(bet);
 	    	computerAccount.withdraw(bet);
@@ -248,6 +257,20 @@ public class PokerController {
         model.addAttribute("scoreHand", scoreHand);
         model.addAttribute("scoreComputer", scoreComputer);
         return message;
+    }
+    
+    private Strategy getBettingStrategy(Account pot, Account computerAccount, Hand hand, Hand river) {
+		Hand scoreHand = new Hand();
+		for (Card card : hand.getCards()) {
+    		scoreHand.addCard(card);
+        }
+		if (river != null) {
+	    	for (Card card : river.getCards()) {
+	    		scoreHand.addCard(card);;
+	        }
+		}
+    	return BettingStrategy.getStrategy(scoreHand, computerAccount, pot);
+		
     }
     
 }

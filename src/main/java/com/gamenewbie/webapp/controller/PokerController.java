@@ -177,7 +177,21 @@ public class PokerController {
     	// Play hand
     	Hand finalComputer = new Hand();
     	Hand finalHand = new Hand();
-    	if (handStatus.equals(HandStatus.check) || handStatus.equals(HandStatus.call)) {
+    	if (computerAccount.getBalance() == 0. || playerAccount.getBalance() == 0. ) {
+    		if (river == null) {
+	    		river = new Hand();
+	        	for (int i = 0; i < 5; i++) {
+	        		river.addCard(deck.dealCard());
+	        	} 
+	    	} else {
+	    		while (river.getCards().size() < 5) {
+	        		river.addCard(deck.dealCard());
+	        	} 
+	    	}
+
+    	} 
+    	
+    	if (handStatus.equals(HandStatus.check) || handStatus.equals(HandStatus.call) || computerAccount.getBalance() == 0. || playerAccount.getBalance() == 0. ) {
 	    	if (river == null) {
 	    		river = new Hand();
 	        	for (int i = 0; i < 3; i++) {

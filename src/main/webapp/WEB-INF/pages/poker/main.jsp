@@ -108,13 +108,13 @@
     <i class="icon-ok"></i>Fold</a>
 </div>
 </c:if>
-<c:if test="${handStatus != 'finish'}">
+<c:if test="${handStatus != 'finish' && handStatus != 'raise'}">
 <div style="float: left; padding: 2px 2px 2px 2px;">
 <a style="padding: 2px 2px 2px 2px;" class="btn btn-default" href="#" onclick="javascript:submitBet('check')">
     <i class="icon-ok"></i>Check</a>
 </div>
 </c:if>
-<c:if test="${handStatus == 'bet'}">
+<c:if test="${handStatus == 'raise'}">
 <div style="float: left; padding: 2px 2px 2px 2px;">
 <a style="padding: 2px 2px 2px 2px;" class="btn btn-default" href="#" onclick="javascript:submitBet('call')">
     <i class="icon-ok"></i>Call</a>

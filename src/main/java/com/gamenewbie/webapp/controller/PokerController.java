@@ -51,7 +51,7 @@ public class PokerController {
     @RequestMapping(method = RequestMethod.GET)
     public ModelAndView startGame(@RequestParam(required = false, value = "reset") boolean reset, HttpServletRequest request) throws Exception {
         Model model = new ExtendedModelMap();
-
+        Double lastRaise = 0.;
     	Deck deck = new Deck();
     	deck.shuffle();
     	Hand hand = new Hand();
@@ -103,6 +103,7 @@ public class PokerController {
     	request.getSession().setAttribute("hand", hand);
     	request.getSession().setAttribute("river", null);
     	request.getSession().setAttribute("dealerButton", dealerButton);
+    	request.getSession().setAttribute("lastRaise", lastRaise);
     	
     	
     	model.addAttribute("message", message);
@@ -140,6 +141,7 @@ public class PokerController {
     	Account pot = (Account) session.getAttribute("pot");
     	Account computerAccount = (Account) session.getAttribute("computerAccount");
     	Account playerAccount = (Account) session.getAttribute("playerAccount");
+    	Double lastRaise = (Double) session.getAttribute("lastRaise");
     	HandStatus handStatus = null;
     	
     	if (action.equals("fold")) {
@@ -151,15 +153,18 @@ public class PokerController {
     			handStatus = HandStatus.raise;
     		} else if (action.equals("call")) {
     			handStatus = HandStatus.call;
+    			playerBet = lastRaise;
     		} else if (action.equals("check")) {
     			// Automatic computer call...
     			handStatus = HandStatus.check;
     		}
-    		Strategy strategy = getBettingStrategy(pot, computerAccount, computerHand, river, playerBet);
+    		Strategy strategy = getBettingStrategy(handStatus, pot, computerAccount, computerHand, river, playerBet);
 			processAccountsForBet(strategy,  playerBet, session, pot, computerAccount, playerAccount);
     		
     		if (strategy.getHandStatus() == HandStatus.raise) {
+    			handStatus = HandStatus.raise;
     			message = "Computer raised " + strategy.getBet() + ". Your bet";
+    			lastRaise = strategy.getBet();
     		} else if (strategy.getHandStatus() == HandStatus.fold) {
     			message = "Computer folded";
     			handStatus = HandStatus.finish;
@@ -206,15 +211,18 @@ public class PokerController {
 	    	}
     	}
     	
+    	request.getSession().setAttribute("lastRaise", lastRaise);
     	model.addAttribute("message", message);
     	if (river != null) {
     		model.addAttribute("river", river.getCards());
     	}
+
     	model.addAttribute("hand", hand.getCards());
     	model.addAttribute("computer", computerHand.getCards());
     	model.addAttribute("showCards", showCards);
     	model.addAttribute("pot", pot);
         model.addAttribute("handStatus", handStatus.toString());
+        System.out.println(handStatus.toString());
 
 
         return new ModelAndView("poker/main", model.asMap());
@@ -258,6 +266,7 @@ public class PokerController {
 		} else {
 			message = "It was a tie";
 			playerAccount.deposit(pot.getBalance()/2);
+			computerAccount.deposit(pot.getBalance()/2);
 		}
 		pot.setBalance(0);
 
@@ -267,7 +276,7 @@ public class PokerController {
         return message;
     }
     
-    private Strategy getBettingStrategy(Account pot, Account computerAccount, Hand hand, Hand river, double bet) {
+    private Strategy getBettingStrategy(HandStatus handStatus, Account pot, Account computerAccount, Hand hand, Hand river, double bet) {
 		Hand scoreHand = new Hand();
 		for (Card card : hand.getCards()) {
     		scoreHand.addCard(card);
@@ -277,7 +286,7 @@ public class PokerController {
 	    		scoreHand.addCard(card);;
 	        }
 		}
-    	return BettingStrategy.getStrategy(scoreHand, computerAccount, pot, bet);
+    	return BettingStrategy.getStrategy(handStatus, scoreHand, computerAccount, pot, bet);
 		
     }
     

@@ -165,10 +165,12 @@ public class PokerController {
     			handStatus = HandStatus.raise;
     			message = "Computer raised " + strategy.getBet() + ". Your bet";
     			lastRaise = strategy.getBet();
+    		} else if (strategy.getHandStatus() == HandStatus.call) {
+    			message = "Computer called";
+    			handStatus = HandStatus.call;
     		} else if (strategy.getHandStatus() == HandStatus.fold) {
     			message = "Computer folded";
     			handStatus = HandStatus.finish;
-    			
     		}
     	}
     	

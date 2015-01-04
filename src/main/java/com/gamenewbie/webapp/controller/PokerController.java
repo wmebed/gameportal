@@ -117,21 +117,20 @@ public class PokerController {
     }
     
     @RequestMapping(value = "bet", method = RequestMethod.POST)
-    public ModelAndView playGame(@RequestParam(required = false, value = "bet") Double bet, @RequestParam(required = false, value = "action") String action,
+    public ModelAndView playGame(@RequestParam(required = false, value = "bet") Double playerBet, @RequestParam(required = false, value = "action") String action,
     		HttpServletRequest request) throws Exception {
 
     	Model model = new ExtendedModelMap();
     	String message = null;
     	boolean showCards = false;
 
-    	if (bet == null) {
-    		bet = 0.0;
+    	if (playerBet == null) {
+    		playerBet = 0.0;
     	}
 
     	Integer dealerButton = (Integer) request.getSession().getAttribute("dealerButton");
-    	if (dealerButton == 0) {
-    		message = "You last bet was " + bet + ", the computer called";
-    	}
+    	message = "You last bet was " + playerBet + ", the computer called";
+
     	
     	HttpSession session = request.getSession();
     	Deck deck = (Deck) session.getAttribute("deck");  	
@@ -148,29 +147,23 @@ public class PokerController {
     		message = "You folded";
     		handStatus = HandStatus.finish;
     	} else {
-    		if (action.equals(bet)) {
+    		if (action.equals("bet")) {
     			handStatus = HandStatus.raise;
     		} else if (action.equals("call")) {
-    			handStatus = HandStatus.call;
-    		} else if (action.equals("bet")) {
-    			// Automatic computer call...
     			handStatus = HandStatus.call;
     		} else if (action.equals("check")) {
     			// Automatic computer call...
     			handStatus = HandStatus.check;
     		}
-    		Strategy strategy = getBettingStrategy(pot, computerAccount, computerHand, river, bet);
-    		if (strategy.getHandStatus() == HandStatus.call) {
-    			pot = processAccountsForBet(handStatus, bet, session, pot, computerAccount, playerAccount);
-    		} else if (strategy.getHandStatus() == HandStatus.raise){
+    		Strategy strategy = getBettingStrategy(pot, computerAccount, computerHand, river, playerBet);
+			processAccountsForBet(strategy,  playerBet, session, pot, computerAccount, playerAccount);
+    		
+    		if (strategy.getHandStatus() == HandStatus.raise) {
     			message = "Computer raised " + strategy.getBet() + ". Your bet";
-    			computerAccount.withdraw(strategy.getBet());
-    			pot.deposit(strategy.getBet());
-    		} else {
+    		} else if (strategy.getHandStatus() == HandStatus.fold) {
     			message = "Computer folded";
     			handStatus = HandStatus.finish;
-    			playerAccount.deposit(pot.getBalance());
-    			pot.setBalance(0.0);
+    			
     		}
     	}
     	
@@ -204,6 +197,14 @@ public class PokerController {
     	if (showCards) {
     		message = scoreHands(finalComputer, finalHand, model, pot, computerAccount, playerAccount);
     	} 
+    	if (handStatus == HandStatus.finish) {
+	    	if (computerAccount.getBalance() <= 0) {
+	    		message = message + "\nComputer went bankrupt, you win";
+	    	} else if (playerAccount.getBalance() <= 0) {
+	    		message = message = "\nYou went bankrupt, the computer won";
+	    		resetAllAccounts(playerAccount, computerAccount);
+	    	}
+    	}
     	
     	model.addAttribute("message", message);
     	if (river != null) {
@@ -219,17 +220,21 @@ public class PokerController {
         return new ModelAndView("poker/main", model.asMap());
     }
 
-	private Account processAccountsForBet(HandStatus handStatus, Double bet, HttpSession session,
-			Account pot, Account computerAccount, Account playerAccount) {
+	private void resetAllAccounts(Account playerAccount, Account computerAccount) {
+		playerAccount.setBalance(100);
+		computerAccount.setBalance(100);
 		
-		if (handStatus.equals(HandStatus.call) || handStatus.equals(HandStatus.raise)) {
-			pot.deposit(bet*2);
-	    	playerAccount.withdraw(bet);
-	    	computerAccount.withdraw(bet);
-		}
-    	
-    	
-		return pot;
+	}
+
+	private void processAccountsForBet(Strategy strategy, Double playerBet, HttpSession session,
+			Account pot, Account computerAccount, Account playerAccount) {
+			if (strategy.getHandStatus() == HandStatus.fold) {
+				playerAccount.deposit(pot.getBalance());
+			} else {
+				pot.deposit(playerBet + strategy.getBet());
+		    	playerAccount.withdraw(playerBet);
+		    	computerAccount.withdraw(strategy.getBet());
+			}
 	}
 	
 	private void fold(Account pot, Account computerAccount, String message) {

@@ -3,12 +3,29 @@
 <head>
     <title><fmt:message key="home.title"/></title>
     <meta name="menu" content="Home"/>
+    <link rel="stylesheet" type="text/css" href="/gameportal/styles/slider.css">
+    <script type="text/javascript" src="<c:url value="/scripts/jquery-1.11.2.min.js"/>"></script>
+    <script type="text/javascript" src="<c:url value="/scripts/bootstrap-slider.js"/>"></script>
     <script type="text/javascript">
 		function submitBet(action) {
-		document.getElementById('action').value=action; 
-		document.getElementById('form1').submit();
+			document.getElementById('action').value=action; 
+			document.getElementById('form1').submit();
 		}	
+		
+
+		$( document ).ready(function() {
+			$("#betqty").text(0); 
+			$('.slider').slider()
+			.on('slide', function(ev){
+				var bet = $('#bet').val();
+				$("#betqty").text(bet);
+			  });
+		});
+
+
 	</script>
+
+
 </head>
 <body class="home">
 
@@ -127,8 +144,10 @@
 		<table class="table-striped" cellpadding="5">
         <tr>
             <th>Bet:</th>
-            <td><input name="bet"></td>
+            <td><input id='bet' type="text" class="slider" data-slider-min="0" data-slider-max="50" data-slider-step="1"  data-slider-value="-1" name="bet"></td>
+            <td id="betqty"></td>
         </tr>
+       
     </table>
     <input type="hidden" id="action" name="action">
 	</form>

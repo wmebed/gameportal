@@ -163,6 +163,7 @@ public class PokerController {
     		
     		if (strategy.getHandStatus() == HandStatus.raise) {
     			handStatus = HandStatus.raise;
+    			playerBet += lastRaise;
     			message = "Computer raised " + strategy.getBet() + ". Your bet";
     			lastRaise = strategy.getBet();
     		} else if (strategy.getHandStatus() == HandStatus.call) {

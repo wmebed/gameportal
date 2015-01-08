@@ -116,10 +116,18 @@
 </c:if>
 </div>
 <c:if test="${handStatus != 'finish'}">
+<c:if test="${handStatus == 'raise'}">
+<div style="float: left; padding: 2px 2px 2px 2px;">
+<a style="padding: 2px 2px 2px 2px;" class="btn btn-default" href="#" onclick="javascript:submitBet('bet')">
+    <i class="icon-ok"></i>Raise</a>
+</div>
+</c:if>
+<c:if test="${handStatus != 'raise'}">
 <div style="float: left; padding: 2px 2px 2px 2px;">
 <a style="padding: 2px 2px 2px 2px;" class="btn btn-default" href="#" onclick="javascript:submitBet('bet')">
     <i class="icon-ok"></i>Bet</a>
 </div>
+</c:if>
 <div style="float: left; padding: 2px 2px 2px 2px;">
 <a style="padding: 2px 2px 2px 2px;" class="btn btn-default" href="#" onclick="javascript:submitBet('fold')">
     <i class="icon-ok"></i>Fold</a>
@@ -143,7 +151,7 @@
 	<form id="form1" method="POST" action="/gameportal/poker/bet" >
 		<table class="table-striped" cellpadding="5">
         <tr>
-            <th>Bet:</th>
+            <th style="margin-right: 10px;">Amount:</th>
             <td><input id='bet' type="text" class="slider" data-slider-min="0" data-slider-max="50" data-slider-step="1"  data-slider-value="-1" name="bet"></td>
             <td id="betqty"></td>
         </tr>

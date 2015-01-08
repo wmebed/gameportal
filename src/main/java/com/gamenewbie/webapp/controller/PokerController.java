@@ -158,7 +158,7 @@ public class PokerController {
     			// Automatic computer call...
     			handStatus = HandStatus.check;
     		}
-    		Strategy strategy = getBettingStrategy(handStatus, pot, computerAccount, computerHand, river, playerBet);
+    		Strategy strategy = getBettingStrategy(handStatus, pot, computerAccount, playerAccount, computerHand, river, playerBet);
 			processAccountsForBet(strategy,  playerBet, session, pot, computerAccount, playerAccount);
     		
     		if (strategy.getHandStatus() == HandStatus.raise) {
@@ -178,7 +178,7 @@ public class PokerController {
     	// Play hand
     	Hand finalComputer = new Hand();
     	Hand finalHand = new Hand();
-    	if (computerAccount.getBalance() == 0. || playerAccount.getBalance() == 0. ) {
+    	if (computerAccount.getBalance() <= 0. || playerAccount.getBalance() <= 0. ) {
     		if (river == null) {
 	    		river = new Hand();
 	        	for (int i = 0; i < 5; i++) {
@@ -293,7 +293,7 @@ public class PokerController {
         return message;
     }
     
-    private Strategy getBettingStrategy(HandStatus handStatus, Account pot, Account computerAccount, Hand hand, Hand river, double bet) {
+    private Strategy getBettingStrategy(HandStatus handStatus, Account pot, Account computerAccount, Account playerAccount, Hand hand, Hand river, double bet) {
 		Hand scoreHand = new Hand();
 		for (Card card : hand.getCards()) {
     		scoreHand.addCard(card);
@@ -303,7 +303,7 @@ public class PokerController {
 	    		scoreHand.addCard(card);;
 	        }
 		}
-    	return BettingStrategy.getStrategy(handStatus, scoreHand, computerAccount, pot, bet);
+    	return BettingStrategy.getStrategy(handStatus, scoreHand, computerAccount, playerAccount, pot, bet);
 		
     }
     

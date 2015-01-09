@@ -42,6 +42,7 @@ public class PokerController {
 	
 
     private UserManager userManager = null;
+    private static double ante = 5.;
 
     @Autowired
     public void setUserManager(UserManager userManager) {
@@ -88,14 +89,14 @@ public class PokerController {
 //    	}
     	
     	if (dealerButton == 0) {
-    		message = "Ante is 1, your bet";
+    		message = "Ante is " + ante + ", your bet";
     	} else {
     		message = "Computer bets, what do you do?";
     	}
     	Account pot = new Account(0);
-    	computerAccount.withdraw(1);
-    	playerAccount.withdraw(1);
-    	pot.deposit(2);
+    	computerAccount.withdraw(ante);
+    	playerAccount.withdraw(ante);
+    	pot.deposit(ante * 2);
     	
     	request.getSession().setAttribute("pot", pot);
     	request.getSession().setAttribute("deck", deck);
